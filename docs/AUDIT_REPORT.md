@@ -38,3 +38,17 @@ Three active deployed Edge Function source files have now been added under `supa
 **Important boundary:** The Supabase project is the backend serving Mughal E Raj ordering and QR-menu flows (its Edge Function CORS allowlist includes Plateria domains). It should not be silently treated as a separate Plateria SaaS database or merged with another project without a deliberate architecture decision.
 
 The migration API returned migration names and versions, not the SQL bodies. Therefore the original migration SQL has not yet been recovered into this repository. A live schema inventory is not a substitute for the authoritative migration history.
+
+
+## Additional SQL source recovery
+
+Two SQL files found in the project library have been archived under `supabase/drafts/`:
+
+- `owner-business-records.setup.sql` — creates an owner-only business records table and policies. It is a setup script for an additional owner data-entry feature; it is not confirmed as part of the deployed 19-migration history.
+- `table-qr-security.draft.sql` — creates table QR credential and short-lived session tables. The source explicitly states that it has **not** been applied to Supabase.
+
+These are preserved as drafts and must not be run against production simply because they are in this repository. They require review and staging validation.
+
+## Package manifest search
+
+A search of the connected project files and library did not locate an authoritative Electron `package.json` or lockfile. No manifest has been invented or committed. The app's actual Electron version, npm scripts, dependencies, and packaging configuration remain unverified.
