@@ -14,3 +14,12 @@
 | `dashboards/owner.html` | `mughal-e-raj-owner-dashboard-auto-refresh(3).html` | Latest identified owner dashboard |
 
 The direct-print ZIP is a focused fix bundle, not a complete Electron application. A separate Firebase starter document was identified as an older/alternate backend and was not mixed into the selected Supabase source set.
+
+
+## Supabase backend sources
+
+- `supabase/functions/create-order/index.ts` — deployed Edge Function version 6
+- `supabase/functions/create-order-secure/index.ts` — deployed Edge Function version 6
+- `supabase/functions/start-table-session/index.ts` — deployed Edge Function version 6
+
+The active Supabase project is `mughal-e-raj-orders`. Its schema/migration inventory is documented in `AUDIT_REPORT.md`. Original migration SQL bodies were not returned by the migration-list API and remain a recovery item.
