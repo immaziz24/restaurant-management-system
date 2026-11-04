@@ -23,3 +23,11 @@ The direct-print ZIP is a focused fix bundle, not a complete Electron applicatio
 - `supabase/functions/start-table-session/index.ts` — deployed Edge Function version 6
 
 The active Supabase project is `mughal-e-raj-orders`. Its schema/migration inventory is documented in `AUDIT_REPORT.md`. Original migration SQL bodies were not returned by the migration-list API and remain a recovery item.
+
+
+## Additional SQL files archived as drafts
+
+- `supabase/drafts/owner-business-records.setup.sql` — owner business-records table and RLS setup script; not confirmed as deployed migration history.
+- `supabase/drafts/table-qr-security.draft.sql` — QR-token and table-session schema draft; source explicitly says it has not been applied.
+
+No authoritative `package.json` or lockfile was found in the connected project library, so none has been fabricated.
