@@ -4,10 +4,12 @@
 
 | Staged path | Workspace source | Notes |
 |---|---|---|
-| `desktop/index.html` | `index(20261102-134212).html` | Latest identified Electron launcher renderer |
-| `desktop/main.js` | `main(4).js` | Latest identified Electron main process; dashboard origin made configurable |
-| `desktop/preload.js` | Reconstructed during audit | Narrow `contextBridge` matching `window.desktopTabs` calls in launcher |
-| `desktop/kitchen-preload.js` | Extracted from `MughalERaj_DirectPrint_Fix.zip` | Kitchen-only print bridge |
+| `desktop/index.html` | `index(20261104-160814).html` | User-supplied launcher renderer, refreshed in repository |
+| `desktop/main.js` | `main(5).js` | User-supplied Electron main process; loads remote Plateria dashboards and restricts navigation to that origin |
+| `desktop/preload.js` | `preload(3).js` | User-supplied narrow `contextBridge` matching `window.desktopTabs` calls |
+| `desktop/kitchen-preload.js` | `kitchen-preload(1).js` | User-supplied Kitchen-only print bridge |
+| `desktop/package.json` | `package(1).json` | Original Electron app manifest; Electron and Electron Builder versions, scripts, and Windows NSIS packaging |
+| `desktop/package-lock.json` | `package-lock.json` | User-supplied npm lockfile v3; 284 package entries; root dependencies match manifest |
 | `dashboards/kitchen.html` | `mughal-e-raj-kitchen-dashboard-fixed.html` | Latest identified kitchen dashboard; prefilled staff email removed |
 | `dashboards/billing.html` | `mughal-e-raj-billing-dashboard(5).html` | Latest identified billing dashboard |
 | `dashboards/manager.html` | `mughal-e-raj-manager-dashboard(4).html` | Latest identified manager dashboard; prefilled staff email removed |
@@ -30,7 +32,7 @@ The active Supabase project is `mughal-e-raj-orders`. Its schema/migration inven
 - `supabase/drafts/owner-business-records.setup.sql` — owner business-records table and RLS setup script; not confirmed as deployed migration history.
 - `supabase/drafts/table-qr-security.draft.sql` — QR-token and table-session schema draft; source explicitly says it has not been applied.
 
-No authoritative `package.json` or lockfile was found in the connected project library, so none has been fabricated.
+The user has now supplied the original Electron manifest and lockfile; both are committed under `desktop/`.
 
 
 ## Remaining deployed test/validation Edge Functions
