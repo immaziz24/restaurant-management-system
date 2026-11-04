@@ -1,0 +1,287 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Mughal E Raj — Kitchen Dashboard</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+:root{--bg:#12070b;--panel:#211017;--line:#49303a;--gold:#d8b46a;--text:#f8eee0;--muted:#c2aeb1;--green:#65d49a;--red:#ff7777}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--text);font:15px/1.45 system-ui,Segoe UI,Arial,sans-serif}
+header{padding:18px 22px;border-bottom:1px solid var(--line);display:flex;gap:16px;align-items:center;justify-content:space-between;flex-wrap:wrap;background:#1b090f;position:sticky;top:0;z-index:2}
+.brand{font-weight:800;letter-spacing:.12em}.brand small{display:block;color:var(--gold);font-size:11px;letter-spacing:.18em}
+button,input{font:inherit;border-radius:9px}button{cursor:pointer;border:1px solid var(--line);background:#302018;color:var(--text);padding:10px 14px}button.primary{background:var(--gold);color:#1c0e09;border-color:var(--gold);font-weight:800}button:disabled{opacity:.5;cursor:wait}
+main{max-width:1200px;margin:auto;padding:22px}.hidden{display:none!important}.muted{color:var(--muted)}.gold{color:var(--gold)}
+#loginPanel{max-width:440px;margin:8vh auto;background:var(--panel);padding:24px;border:1px solid var(--line);border-radius:16px}
+label{display:block;margin:14px 0 6px;color:var(--muted);font-size:13px}input{width:100%;padding:12px;background:#10070a;border:1px solid var(--line);color:var(--text)}
+.stats{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin:18px 0}.stat,.order{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:16px}.stat strong{font-size:25px;display:block;color:var(--gold)}
+.toolbar{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin:18px 0}.toolbar button.active{background:var(--gold);color:#1c0e09}
+#orders{display:grid;grid-template-columns:repeat(auto-fit,minmax(310px,1fr));gap:14px}.order h3{margin:0 0 6px;font-size:20px}.order-top{display:flex;justify-content:space-between;gap:10px}.pill{display:inline-block;padding:4px 9px;border-radius:999px;background:#382619;color:var(--gold);font-size:12px;text-transform:uppercase}.items{padding-left:20px}.items li{padding:5px 0}.qty{font-weight:800;color:var(--gold);margin-right:8px}.note{background:#160b10;border-left:3px solid var(--gold);padding:9px;margin:10px 0;white-space:pre-wrap}.actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:14px}.actions button{flex:1}.error{color:#ff9696;margin-top:10px}.success{color:var(--green)}#notice{margin:10px 0}
+@media(max-width:650px){main{padding:12px}.stats{grid-template-columns:repeat(2,minmax(0,1fr))}.order{padding:13px}}
+/* HPRT KP806C: 80 mm thermal roll, approximately 72 mm printable area.
+   Set the printer driver paper width to 80 mm / continuous roll.
+   The driver controls ticket length; this CSS keeps content inside the print head. */
+@page{margin:0}
+@media print{
+  html,body{background:#fff!important;color:#111!important;margin:0!important;padding:0!important;width:72mm!important;min-width:72mm!important}
+  body>*{display:none!important}
+  #printTicket{display:block!important;width:72mm!important;min-width:72mm!important;max-width:72mm!important;margin:0!important;padding:1mm 1.5mm!important;font:13px/1.3 Arial,sans-serif;color:#111!important;box-sizing:border-box}
+  #printTicket h1{text-align:center;font-size:19px;letter-spacing:.5px;margin:0 0 2px}
+  #printTicket h2{text-align:center;font-size:15px;margin:0 0 7px}
+  #printTicket .center{text-align:center}
+  #printTicket .ticket-meta{border-top:2px solid #111;border-bottom:2px solid #111;padding:6px 0;margin:6px 0;font-weight:700}
+  #printTicket .ticket-section{margin:7px 0}
+  #printTicket .ticket-label{font-size:11px;text-transform:uppercase;font-weight:700;letter-spacing:.4px}
+  #printTicket .ticket-table{width:100%;border-collapse:collapse;margin:6px 0}
+  #printTicket .ticket-table th{text-align:left;font-size:11px;text-transform:uppercase;border-bottom:1px solid #111;padding:3px 0}
+  #printTicket .ticket-table td{vertical-align:top;border-bottom:1px dashed #777;padding:6px 1px}
+  #printTicket .ticket-table .qty{width:15mm;text-align:right;font-size:15px;font-weight:700;white-space:nowrap}
+  #printTicket .item-name{font-size:14px;font-weight:700;overflow-wrap:anywhere}
+  #printTicket .item-note{font-size:12px;font-weight:700;margin-top:3px;overflow-wrap:anywhere}
+  #printTicket .ticket-note{border:1px solid #111;padding:5px;margin:6px 0;overflow-wrap:anywhere}
+  #printTicket .cut{border-top:2px dashed #111;margin-top:8px;padding-top:7px;font-weight:700}
+  #printTicket p{margin:4px 0;overflow-wrap:anywhere}
+  #printTicket .ticket-section,#printTicket .ticket-meta,#printTicket .ticket-table tr{break-inside:avoid;page-break-inside:avoid}
+}
+#printTicket{display:none}
+
+/* Customer confirmation modal — replaces unsupported window.prompt() in Electron */
+.confirmation-modal{position:fixed;inset:0;z-index:9999;display:flex;align-items:center;justify-content:center;padding:18px;background:rgba(0,0,0,.78)}
+.confirmation-modal[hidden]{display:none!important}
+.confirmation-card{width:min(100%,460px);padding:24px;background:#211017;border:1px solid var(--gold);border-radius:16px;box-shadow:0 20px 70px rgba(0,0,0,.6)}
+.confirmation-card h2{margin:0 0 8px;color:var(--gold);font-size:22px}
+.confirmation-card p{margin:0 0 18px;color:var(--text)}
+.confirmation-options{display:grid;gap:10px}
+.confirmation-options button{width:100%;min-height:48px;text-align:left}
+.confirmation-options button.primary{color:#1c0e09}
+.confirmation-options button.cancel-confirmation{background:transparent;color:var(--muted)}
+
+</style>
+</head>
+<body>
+<header><div class="brand">MUGHAL E RAJ <small>KITCHEN ORDER DASHBOARD</small></div><div><span id="staffLabel" class="muted"></span> <button id="refreshBtn">Refresh orders</button> <button id="logoutBtn" class="hidden">Sign out</button></div></header>
+<main>
+<section id="loginPanel">
+<h1>Kitchen sign in</h1><p class="muted">Use the staff account created in Supabase Authentication.</p>
+<form id="loginForm"><label for="email">Email address</label><input id="email" type="email" autocomplete="username" required value=""><label for="password">Password</label><input id="password" type="password" autocomplete="current-password" required><p><button class="primary" type="submit" id="loginBtn">Sign in</button></p><div id="loginError" class="error"></div></form>
+</section>
+<section id="dashboard" class="hidden">
+<h1>Incoming orders</h1><p class="muted">Orders are sorted newest first. Use the status buttons to update the kitchen progress.</p>
+<div id="notice" class="muted" role="status">Loading…</div>
+<div class="stats"><div class="stat"><strong id="countPending">0</strong>Pending</div><div class="stat"><strong id="countPreparing">0</strong>Preparing</div><div class="stat"><strong id="countReady">0</strong>Ready</div><div class="stat"><strong id="countToday">0</strong>Orders today</div></div>
+<div class="toolbar" id="filters"><button class="active" data-filter="active">Active orders</button><button data-filter="pending">Pending</button><button data-filter="preparing">Preparing</button><button data-filter="ready">Ready</button><button data-filter="all">All orders</button><button id="testPrintBtn" type="button">Test kitchen ticket</button></div>
+<div id="orders"></div>
+</section>
+</main>
+<section id="printTicket" aria-hidden="true"></section>
+
+<section id="confirmationModal" class="confirmation-modal" hidden aria-hidden="true">
+  <div class="confirmation-card" role="dialog" aria-modal="true" aria-labelledby="confirmationTitle" aria-describedby="confirmationDescription">
+    <h2 id="confirmationTitle">Confirm customer verification</h2>
+    <p id="confirmationDescription">How did you personally confirm this order with the customer?</p>
+    <div class="confirmation-options">
+      <button type="button" class="primary" data-confirm-method="phone">Phone call confirmed</button>
+      <button type="button" class="primary" data-confirm-method="in_person">Customer is physically present</button>
+      <button type="button" class="cancel-confirmation" data-confirm-method="cancel">Cancel — do not accept order</button>
+    </div>
+  </div>
+</section>
+
+<script>
+(() => {
+  // Safe to place in browser: Supabase project URL + publishable/anon key only.
+  const SUPABASE_URL = "https://YOUR_SUPABASE_PROJECT_REF.supabase.co";
+  const SUPABASE_KEY = "YOUR_SUPABASE_PUBLISHABLE_KEY";
+  const db = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+  const RESTAURANT_ID = "YOUR_RESTAURANT_UUID";
+  let orders = [], filter = "active", refreshTimer = null;
+  const KITCHEN_STATUS_KEY='mer_kitchen_issue2_test_last_status_v1', KITCHEN_PRINTED_KEY='mer_kitchen_issue2_test_printed_v1';
+  const readStore=(key,fallback)=>{try{return JSON.parse(localStorage.getItem(key)||'')}catch(e){return fallback}};
+  let lastStatuses=readStore(KITCHEN_STATUS_KEY,{}), printedOrders=new Set(readStore(KITCHEN_PRINTED_KEY,[]));
+  let statusBaselineReady=Object.keys(lastStatuses).length>0, printInProgress=false;
+  const printQueue=[];
+  const queuedPrintIds=new Set();
+  function savePrintState(){try{localStorage.setItem(KITCHEN_STATUS_KEY,JSON.stringify(lastStatuses));localStorage.setItem(KITCHEN_PRINTED_KEY,JSON.stringify([...printedOrders].slice(-500)))}catch(e){}}
+  function detectAcceptedOrders(nextOrders){
+    // Establish a baseline on first load so old accepted orders are not unexpectedly reprinted.
+    if(!statusBaselineReady){nextOrders.forEach(o=>lastStatuses[o.id]=o.status);statusBaselineReady=true;savePrintState();return;}
+    nextOrders.forEach(o=>{
+      const previous=lastStatuses[o.id];
+      const recent=Date.now()-new Date(o.created_at).getTime()<10*60*1000;
+      if(o.status==='accepted'&&(previous==='pending'||(!previous&&recent))&&!printedOrders.has(o.id)&&!queuedPrintIds.has(o.id)){
+        queuedPrintIds.add(o.id);
+        printQueue.push(o);
+      }
+      lastStatuses[o.id]=o.status;
+    });
+    savePrintState();
+    processPrintQueue();
+  }
+  function processPrintQueue(){
+    if(printInProgress||!printQueue.length)return;
+    const o=printQueue.shift();
+    printInProgress=true;
+    const rows=(o.order_items||[]).map(i=>`<tr><td><div class="item-name">${esc(i.item_name||'Menu item')}</div>${i.special_instructions?`<div class="item-note">NOTE: ${esc(i.special_instructions)}</div>`:''}</td><td class="qty">× ${Number(i.quantity)||1}</td></tr>`).join('');
+    const orderType=String(o.order_type||'').replace(/_/g,' ').toUpperCase();
+    const when=new Date(o.created_at);
+    const timeLabel=Number.isNaN(when.getTime())?'Time unavailable':when.toLocaleString('en-IN',{day:'2-digit',month:'short',year:'numeric',hour:'2-digit',minute:'2-digit'});
+    const place=o.order_type==='dine_in'?`DINE-IN · TABLE ${esc(o.table_number||'—')}`:esc(orderType||'ORDER');
+    $('printTicket').innerHTML=`<h1>MUGHAL E RAJ</h1><h2>KITCHEN ORDER TICKET</h2><div class="ticket-meta center"><div style="font-size:20px">ORDER #${esc(o.order_number)}</div><div>${place}</div><div style="font-size:11px;margin-top:3px">STATUS: ${esc(String(o.status||'accepted').toUpperCase())}</div></div><div class="ticket-section"><div class="ticket-label">Order time</div><p>${esc(timeLabel)}</p><div class="ticket-label">Customer</div><p><strong>${esc(o.customer_name||'Customer not provided')}</strong></p><p>Phone: ${esc(o.customer_phone||'Not provided')}</p>${o.delivery_address?`<div class="ticket-label">Delivery address</div><p>${esc(o.delivery_address)}</p>`:''}</div><div class="ticket-section"><div class="ticket-label">Items to prepare (${(o.order_items||[]).length} lines)</div><table class="ticket-table"><thead><tr><th>Food item / instructions</th><th class="qty">Qty</th></tr></thead><tbody>${rows||'<tr><td>No item details found</td><td class="qty">—</td></tr>'}</tbody></table></div>${o.notes?`<div class="ticket-note"><div class="ticket-label">Customer / kitchen note</div>${esc(o.notes)}</div>`:''}<p class="cut center">CHECK ITEMS & QUANTITIES<br>PREPARE THIS ORDER</p><p class="center" style="font-size:10px;margin-top:8px">Kitchen copy · Reprint if needed</p>`;
+    let finished=false;
+    const done=()=>{
+      if(finished)return;
+      finished=true;
+      window.removeEventListener('afterprint',done);
+      // Mark only after the browser print cycle has returned, then move to the next ticket.
+      printedOrders.add(o.id);
+      queuedPrintIds.delete(o.id);
+      savePrintState();
+      printInProgress=false;
+      setTimeout(processPrintQueue,300);
+    };
+    window.addEventListener('afterprint',done);
+    window.print();
+    // Fallback in browsers that fail to emit afterprint.
+    setTimeout(done,60000);
+  }
+  function printKitchenTicket(o){
+    // Manual test tickets are queued too, so they cannot interrupt a real order ticket.
+    printQueue.push(o);
+    processPrintQueue();
+  }
+
+
+  function printTestKitchenTicket(){
+    const sample={order_number:'TEST',created_at:new Date().toISOString(),order_type:'dine_in',table_number:'TEST',customer_name:'Printing test',customer_phone:'—',notes:'TEST TICKET ONLY — DO NOT PREPARE',delivery_address:null,order_items:[{item_name:'Sample Chicken Curry',quantity:1,special_instructions:'Test instruction'},{item_name:'Sample Naan',quantity:2,special_instructions:''}]};
+    printKitchenTicket(sample);
+  }
+
+
+  const $ = id => document.getElementById(id);
+  const money = paise => "₹" + (Number(paise || 0) / 100).toLocaleString("en-IN",{maximumFractionDigits:2});
+  const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+  function notice(message, isError=false){ $("notice").textContent=message; $("notice").className=isError?"error":"muted"; }
+  function showDashboard(email){ $("loginPanel").classList.add("hidden"); $("dashboard").classList.remove("hidden"); $("logoutBtn").classList.remove("hidden"); $("staffLabel").textContent=email||""; }
+  function showLogin(){ $("loginPanel").classList.remove("hidden"); $("dashboard").classList.add("hidden"); $("logoutBtn").classList.add("hidden"); $("staffLabel").textContent=""; }
+  async function checkStaff(user){
+    const {data,error}=await db.from("staff_members").select("role,is_active,restaurant_id").eq("user_id",user.id).maybeSingle();
+    if(error) throw error;
+    if(!data || !data.is_active || data.restaurant_id!==RESTAURANT_ID) throw new Error("This login is not active staff for Mughal E Raj. Ask the administrator to check staff_members.");
+    if(data.role!=="kitchen") throw new Error("Access denied: only an active Kitchen account may use the Kitchen dashboard.");
+    return data;
+  }
+  async function loadOrders(){
+    notice("Loading orders…");
+    const {data,error}=await db.from("orders").select("id,order_number,customer_name,customer_phone,order_type,table_number,delivery_address,notes,status,payment_status,subtotal_paise,total_paise,created_at,order_items(id,item_name,quantity,unit_price_paise,line_total_paise,special_instructions)").eq("restaurant_id",RESTAURANT_ID).order("created_at",{ascending:false}).limit(100);
+    if(error){notice("Could not load orders: "+error.message,true);return;}
+    orders=data||[]; detectAcceptedOrders(orders); updateStats(); renderOrders(); notice("Last refreshed: "+new Date().toLocaleTimeString());
+  }
+  function updateStats(){
+    $("countPending").textContent=orders.filter(o=>o.status==="pending").length;
+    $("countPreparing").textContent=orders.filter(o=>o.status==="preparing").length;
+    $("countReady").textContent=orders.filter(o=>o.status==="ready").length;
+    const today=new Date(); const start=new Date(today.getFullYear(),today.getMonth(),today.getDate());
+    $("countToday").textContent=orders.filter(o=>new Date(o.created_at)>=start).length;
+  }
+  function renderOrders(){
+    let shown=orders;
+    if(filter==="active") shown=orders.filter(o=>["pending","accepted","preparing","ready"].includes(o.status));
+    else if(filter!=="all") shown=orders.filter(o=>o.status===filter);
+    if(!shown.length){$("orders").innerHTML='<div class="order"><strong>No orders in this view.</strong><p class="muted">New customer orders will appear here after refresh.</p></div>';return;}
+    $("orders").innerHTML=shown.map(o=>{
+      const items=(o.order_items||[]).map(i=>`<li><span class="qty">${Number(i.quantity)} ×</span><strong>${esc(i.item_name)}</strong><div class="muted">${money(i.unit_price_paise)} each · ${money(i.line_total_paise)}</div>${i.special_instructions?`<div class="note">${esc(i.special_instructions)}</div>`:""}</li>`).join("");
+      const where=o.order_type==="dine_in" ? `Table ${esc(o.table_number||"—")}` : esc(o.order_type.replace("_"," "));
+      const next = o.status==="pending" ? [["accepted","Confirm & accept"]] :
+        o.status==="accepted" ? [["preparing","Start preparing"]] :
+        o.status==="preparing" ? [["ready","Mark ready"]] :
+        o.status==="ready" ? [["completed","Complete order"]] : [];
+      return `<article class="order"><div class="order-top"><div><h3>Order #${esc(o.order_number)}</h3><div class="muted">${new Date(o.created_at).toLocaleString()}</div></div><span class="pill">${esc(o.status)}</span></div>
+      <p><strong>${where}</strong> · ${esc(o.customer_name||"Customer")}<br><span class="muted">${o.customer_phone?esc(o.customer_phone):"No mobile supplied"}</span></p>
+      <ul class="items">${items||"<li>No item details found</li>"}</ul>
+      ${o.notes?`<div class="note"><strong>Customer note:</strong><br>${esc(o.notes)}</div>`:""}
+      ${o.delivery_address?`<div class="note"><strong>Delivery address:</strong><br>${esc(o.delivery_address)}</div>`:""}
+      <div class="order-top"><strong>Total: ${money(o.total_paise)}</strong><span class="muted">Payment: ${esc(o.payment_status)}</span></div>
+      <div class="actions">${next.map(([status,label])=>`<button class="primary" data-order="${esc(o.id)}" data-status="${status}">${label}</button>`).join("")}${["accepted","preparing","ready"].includes(o.status)?`<button class="primary" data-order="${esc(o.id)}" data-reprint="true">Print / Reprint Kitchen Ticket</button>`:""}${!["completed","cancelled"].includes(o.status)?`<button data-order="${esc(o.id)}" data-status="cancelled">Cancel</button>`:""}</div></article>`;
+    }).join("");
+  }
+async function getCustomerConfirmation(userId){
+    if(!confirm('Before accepting: have you personally confirmed this order with the customer? Choose OK only after a phone call or by confirming the customer is physically present.')) return null;
+
+    // Use an in-page modal instead of window.prompt(), which may not appear in Electron.
+    const modal=$("confirmationModal");
+    if(!modal) throw new Error("Customer confirmation window is missing. Please reload the Kitchen dashboard.");
+
+    return await new Promise(resolve=>{
+      const finish=(method)=>{
+        modal.hidden=true;
+        modal.setAttribute("aria-hidden","true");
+        modal.removeEventListener("click",onModalClick);
+        document.removeEventListener("keydown",onModalKeydown);
+        resolve(method==="phone"||method==="in_person" ? {
+          customer_confirmation_method:method,
+          customer_confirmed_at:new Date().toISOString(),
+          customer_confirmed_by:userId
+        } : null);
+      };
+      const onModalClick=(event)=>{
+        const choice=event.target.closest("button[data-confirm-method]");
+        if(choice){finish(choice.dataset.confirmMethod);return;}
+        if(event.target===modal) finish("cancel");
+      };
+      const onModalKeydown=(event)=>{
+        if(event.key==="Escape"){event.preventDefault();finish("cancel");}
+      };
+
+      modal.addEventListener("click",onModalClick);
+      document.addEventListener("keydown",onModalKeydown);
+      modal.hidden=false;
+      modal.setAttribute("aria-hidden","false");
+      modal.querySelector('button[data-confirm-method="phone"]').focus();
+    });
+  }
+  $("loginForm").addEventListener("submit",async e=>{
+    e.preventDefault(); $("loginBtn").disabled=true; $("loginError").textContent="";
+    try{
+      const {data,error}=await db.auth.signInWithPassword({email:$("email").value.trim(),password:$("password").value});
+      if(error) throw error;
+      await checkStaff(data.user);
+      showDashboard(data.user.email); await loadOrders();
+      if(refreshTimer) clearInterval(refreshTimer); refreshTimer=setInterval(()=>{if(!document.hidden)loadOrders()},5000);
+    }catch(err){$("loginError").textContent=err.message||"Sign-in failed."; await db.auth.signOut();}
+    finally{$("loginBtn").disabled=false;}
+  });
+  $("orders").addEventListener("click",async e=>{
+    const b=e.target.closest("button[data-order]"); if(!b)return;
+    const id=b.dataset.order;
+    if(b.dataset.reprint==="true"){
+      const order=orders.find(o=>String(o.id)===String(id));
+      if(!order){notice("Order details are not loaded. Refresh orders and try again.",true);return;}
+      b.disabled=true; const oldLabel=b.textContent; b.textContent="Opening print…";
+      try{printKitchenTicket(order);}
+      finally{setTimeout(()=>{b.disabled=false;b.textContent=oldLabel;},800);}
+      return;
+    }
+    const status=b.dataset.status, old=b.textContent; b.disabled=true;b.textContent="Saving…";
+    try{
+      const {data:sessionData}=await db.auth.getSession();
+      if(!sessionData.session) throw new Error("Session expired. Please sign in again.");
+      let update={status};
+      if(status==="accepted"){
+        const confirmation=await getCustomerConfirmation(sessionData.session.user.id);
+        if(!confirmation){b.disabled=false;b.textContent=old;return;}
+        update={...update,...confirmation};
+      }
+      const {error}=await db.from("orders").update(update).eq("id",id).eq("restaurant_id",RESTAURANT_ID);
+      if(error) throw error;
+      await loadOrders();
+    }catch(err){notice("Status update failed: "+err.message,true);b.disabled=false;b.textContent=old;}
+  });
+  $("filters").addEventListener("click",e=>{const b=e.target.closest("button[data-filter]");if(!b)return;filter=b.dataset.filter;[...$("filters").querySelectorAll("button")].forEach(x=>x.classList.toggle("active",x===b));renderOrders();});
+  $("testPrintBtn").addEventListener("click",printTestKitchenTicket);
+  $("refreshBtn").addEventListener("click",()=>{if(!$("dashboard").classList.contains("hidden"))loadOrders();});
+  $("logoutBtn").addEventListener("click",async()=>{if(refreshTimer)clearInterval(refreshTimer);await db.auth.signOut();orders=[];showLogin();});
+  (async()=>{const {data}=await db.auth.getSession();if(data.session){try{await checkStaff(data.session.user);showDashboard(data.session.user.email);await loadOrders();refreshTimer=setInterval(()=>{if(!document.hidden)loadOrders()},5000);}catch(e){await db.auth.signOut();showLogin();$("loginError").textContent=e.message;}}})();
+})();
+</script>
+</body>
+</html>
