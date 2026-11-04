@@ -1,17 +1,15 @@
 const { app, BrowserWindow, WebContentsView, ipcMain } = require('electron');
 const path = require('path');
 
-const DASHBOARD_ORIGIN = process.env.MUGHAL_DASHBOARD_ORIGIN || 'https://YOUR_DASHBOARD_HOST';
-
 const DASHBOARD_CONFIG = {
     kitchen: {
         title: 'Kitchen',
-        url: `${DASHBOARD_ORIGIN}/mughal-e-raj-kitchen-dashboard.html`,
+        url: 'https://qrmenu.plateria.in/mughal-e-raj-kitchen-dashboard.html',
         partition: 'persist:mughal-kitchen'
     },
     billing: {
         title: 'Billing',
-        url: `${DASHBOARD_ORIGIN}/mughal-e-raj-billing-dashboard.html`,
+        url: 'https://qrmenu.plateria.in/mughal-e-raj-billing-dashboard.html',
         partition: 'persist:mughal-billing'
     }
 };
@@ -57,6 +55,7 @@ function resizeDashboardViews() {
         if (id === activeTabId) {
             view.setBounds(dashboardBounds);
         } else {
+            // Keep the dashboard loaded, but move it out of the visible area.
             view.setBounds({ x: 0, y: 0, width: 0, height: 0 });
         }
     }
@@ -64,6 +63,7 @@ function resizeDashboardViews() {
 
 function selectTab(tabId) {
     if (tabId !== 'home' && !dashboardViews.has(tabId)) return;
+
     activeTabId = tabId;
     resizeDashboardViews();
     sendTabState();
@@ -73,6 +73,7 @@ function openDashboard(department) {
     const config = DASHBOARD_CONFIG[department];
     if (!config || !mainWindow) return;
 
+    // Reuse the existing dashboard view instead of creating another login session.
     if (dashboardViews.has(department)) {
         selectTab(department);
         return;
@@ -81,6 +82,7 @@ function openDashboard(department) {
     const view = new WebContentsView({
         webPreferences: {
             partition: config.partition,
+            // Only the Kitchen dashboard receives the narrowly-scoped direct-print bridge.
             ...(department === 'kitchen' ? { preload: path.join(__dirname, 'kitchen-preload.js') } : {}),
             nodeIntegration: false,
             contextIsolation: true,
@@ -90,8 +92,10 @@ function openDashboard(department) {
 
     dashboardViews.set(department, view);
     mainWindow.contentView.addChildView(view);
+
     view.webContents.setWindowOpenHandler(() => ({ action: 'deny' }));
 
+    // Keep dashboard navigation on the trusted restaurant dashboard origin.
     view.webContents.on('will-navigate', (event, navigationUrl) => {
         let parsedUrl;
         try {
@@ -100,12 +104,16 @@ function openDashboard(department) {
             event.preventDefault();
             return;
         }
-        if (parsedUrl.origin !== new URL(DASHBOARD_ORIGIN).origin) event.preventDefault();
+
+        if (parsedUrl.origin !== 'https://qrmenu.plateria.in') {
+            event.preventDefault();
+        }
     });
 
     activeTabId = department;
     resizeDashboardViews();
     sendTabState();
+
     view.webContents.loadURL(config.url).catch((error) => {
         console.error(`Could not load ${department} dashboard:`, error);
     });
@@ -117,8 +125,15 @@ function closeDashboard(department) {
 
     mainWindow.contentView.removeChildView(view);
     dashboardViews.delete(department);
-    if (!view.webContents.isDestroyed()) view.webContents.destroy();
-    if (activeTabId === department) activeTabId = 'home';
+
+    if (!view.webContents.isDestroyed()) {
+        view.webContents.destroy();
+    }
+
+    if (activeTabId === department) {
+        activeTabId = 'home';
+    }
+
     resizeDashboardViews();
     sendTabState();
 }
@@ -141,10 +156,13 @@ function createMainWindow() {
     });
 
     mainWindow.loadFile('index.html');
+
     mainWindow.on('resize', resizeDashboardViews);
     mainWindow.on('closed', () => {
         for (const view of dashboardViews.values()) {
-            if (!view.webContents.isDestroyed()) view.webContents.destroy();
+            if (!view.webContents.isDestroyed()) {
+                view.webContents.destroy();
+            }
         }
         dashboardViews.clear();
         mainWindow = null;
@@ -152,9 +170,12 @@ function createMainWindow() {
     });
 }
 
+// Kitchen-only silent printing. The dashboard's existing window.print() call is
+// redirected by kitchen-preload.js; no order, login, or Supabase logic is changed.
 ipcMain.on('kitchen:direct-print', (event) => {
     const kitchenView = dashboardViews.get('kitchen');
     if (!kitchenView || kitchenView.webContents.isDestroyed()) return;
+    // Security check: only the actual Kitchen dashboard webContents may request printing.
     if (event.sender !== kitchenView.webContents) return;
 
     kitchenView.webContents.print(
@@ -172,22 +193,35 @@ ipcMain.on('kitchen:direct-print', (event) => {
 });
 
 ipcMain.handle('tabs:get-state', () => getTabState());
+
 ipcMain.on('tabs:open-dashboard', (_event, department) => {
-    if (department === 'kitchen' || department === 'billing') openDashboard(department);
+    if (department === 'kitchen' || department === 'billing') {
+        openDashboard(department);
+    }
 });
+
 ipcMain.on('tabs:select', (_event, tabId) => {
-    if (tabId === 'home' || tabId === 'kitchen' || tabId === 'billing') selectTab(tabId);
+    if (tabId === 'home' || tabId === 'kitchen' || tabId === 'billing') {
+        selectTab(tabId);
+    }
 });
+
 ipcMain.on('tabs:close', (_event, tabId) => {
-    if (tabId === 'kitchen' || tabId === 'billing') closeDashboard(tabId);
+    if (tabId === 'kitchen' || tabId === 'billing') {
+        closeDashboard(tabId);
+    }
 });
 
 app.whenReady().then(() => {
     createMainWindow();
+
     app.on('activate', () => {
-        if (BrowserWindow.getAllWindows().length === 0) createMainWindow();
+        if (BrowserWindow.getAllWindows().length === 0) {
+            createMainWindow();
+        }
     });
 });
+
 app.on('window-all-closed', () => {
     if (process.platform !== 'darwin') app.quit();
 });
