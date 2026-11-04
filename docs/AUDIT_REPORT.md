@@ -4,18 +4,18 @@ Audit scope: selected source files available in the connected project workspace.
 
 ## Findings
 
-1. **Electron renderer/preload mismatch.** The latest launcher HTML calls `window.desktopTabs.*`, while the located legacy `preload.js` does not expose that object. A narrow preload bridge was reconstructed for the staged draft and still requires Electron runtime validation.
-2. **Missing Electron package manifest.** No authoritative `package.json` or lockfile was located. Electron version, scripts, packaging configuration, and dependency tree remain unverified.
+1. **Electron bridge is now aligned in the submitted source set.** The latest launcher HTML calls `window.desktopTabs.*`; the submitted `preload.js` exposes those methods. This still requires Electron runtime validation.
+2. **Electron build configuration recovered.** The user supplied the original `package.json` and matching npm lockfile. The manifest specifies Electron `^45.2.1`, Electron Builder `^26.18.0`, `npm start`, and a Windows x64 NSIS build. The lockfile is version 3 and contains 284 package entries.
 3. **Incomplete backend source.** Dashboard pages use Supabase tables and authentication, but SQL migrations, RLS policies, triggers, database functions, and Edge Function source were not recovered.
 4. **Personal information found.** Kitchen and Manager HTML contained prefilled staff email addresses. Those values were removed from staged public copies.
 5. **Production identifiers found.** Dashboard files contained a production Supabase URL, publishable key, and restaurant UUID. Staged copies replace these with placeholders.
-6. **Remote dashboard dependency.** The Electron launcher loads Kitchen and Billing dashboards from a remote host. The staged main process makes that host configurable; local/offline operation is not established.
+6. **Remote dashboard dependency.** The submitted Electron main process loads Kitchen and Billing dashboards from `qrmenu.plateria.in` and restricts navigation to that origin. The app therefore requires internet access; local/offline operation is not established.
 7. **Order confirmation limitation.** Existing project documentation describes manual customer confirmation by phone or in person, not OTP or payment verification.
 8. **Testing gap.** JavaScript syntax checks passed for staged scripts. No full Electron, authentication, order lifecycle, or physical printer end-to-end test was performed.
 
 ## Release blockers
 
-- Recover/confirm the authoritative Electron `package.json` and lockfile.
+- Confirm the recovered Electron manifest/lockfile against the intended Windows build environment and run an actual packaging test.
 - Recover SQL migrations, RLS policies, trigger/function definitions, and Edge Function code.
 - Confirm final intended dashboard revisions against deployed versions.
 - Configure a staging Supabase project and test with non-production data.
@@ -49,9 +49,11 @@ Two SQL files found in the project library have been archived under `supabase/dr
 
 These are preserved as drafts and must not be run against production simply because they are in this repository. They require review and staging validation.
 
-## Package manifest search
+## Electron build configuration recovery (2026-11-04)
 
-A search of the connected project files and library did not locate an authoritative Electron `package.json` or lockfile. No manifest has been invented or committed. The app's actual Electron version, npm scripts, dependencies, and packaging configuration remain unverified.
+The user supplied the original `package.json` and `package-lock.json`; both are now committed under `desktop/`. The manifest declares Electron `^45.2.1`, Electron Builder `^26.18.0`, `npm start`, and `npm run build:win` (Windows x64 NSIS). The lockfile uses lockfileVersion 3 and contains 284 package entries. Its root package name, version, and declared development dependencies match `package.json`.
+
+The submitted `main.js`, `preload.js`, `kitchen-preload.js`, and `index.html` have been refreshed from the user-provided files. Node syntax checks passed for all three JavaScript files. This does not establish that Electron starts successfully or that the Windows installer builds. The current `main.js` contains the remote dashboard URLs directly and enforces the Plateria dashboard origin; the app remains internet-dependent.
 
 
 ## Read-only live schema metadata snapshot (2026-11-04)
@@ -65,4 +67,4 @@ Notable observations requiring a later security/release review:
 - Three test/validation Edge Functions are still marked ACTIVE in Supabase, and their listed `verify_jwt` setting is false. Their source is archived separately under `supabase/functions-test-archive/`. This is a security-review item; no live function settings were changed.
 - The public policy catalog shows staff-scoped policies for orders, order items, order history and staff records; owner-scoped policies for owner business records; and public read policies for active restaurants and available menu items. This metadata inspection does not establish that the overall system has passed security testing.
 
-The original migration SQL bodies and authoritative Electron package manifest remain unavailable. The repository must not yet be described as a reproducible or production-ready release.
+The original migration SQL bodies remain unavailable. Although the Electron manifest and lockfile are now present, the repository must not yet be described as a production-ready release until the runtime, installer, authentication, order lifecycle, and printer tests pass.
