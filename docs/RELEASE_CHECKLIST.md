@@ -1,9 +1,9 @@
 # Release checklist
 
 - [ ] Confirm exact final dashboard versions with the client
-- [ ] Recover authoritative Electron package manifest and lockfile
+- [x] Recover and commit Electron package manifest and lockfile
 - [ ] Recover Supabase SQL migrations and RLS policies
-- [ ] Recover Edge Function source
+- [x] Recover selected deployed Edge Function source
 - [ ] Confirm staging Supabase project and configure placeholders
 - [ ] Validate Electron preload bridge in runtime
 - [ ] Test role-based sign-in for owner, manager, kitchen, billing
