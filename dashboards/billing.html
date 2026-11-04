@@ -1,0 +1,193 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Mughal E Raj — Billing Dashboard</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+:root{--bg:#12070b;--panel:#211017;--line:#49303a;--gold:#d8b46a;--text:#f8eee0;--muted:#c2aeb1;--green:#65d49a;--red:#ff7777;--blue:#9cc8ff}*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--text);font:15px/1.45 system-ui,Segoe UI,Arial,sans-serif}header{padding:16px 22px;border-bottom:1px solid var(--line);display:flex;gap:14px;align-items:center;justify-content:space-between;flex-wrap:wrap;background:#1b090f;position:sticky;top:0;z-index:3}.brand{font-weight:850;letter-spacing:.12em}.brand small{display:block;color:var(--gold);font-size:11px;letter-spacing:.18em}button,input,select{font:inherit;border-radius:9px}button{cursor:pointer;border:1px solid var(--line);background:#302018;color:var(--text);padding:10px 13px}button.primary{background:var(--gold);color:#1c0d08;border-color:var(--gold);font-weight:800}button:disabled{opacity:.45;cursor:not-allowed}input,select{background:#160b10;border:1px solid var(--line);color:var(--text);padding:11px;width:100%}.wrap{max-width:1500px;margin:auto;padding:22px}.muted{color:var(--muted)}.hidden{display:none!important}.stats{display:grid;grid-template-columns:repeat(3,minmax(130px,1fr));gap:12px;margin:16px 0}.stat,.panel,.order-card{background:var(--panel);border:1px solid var(--line);border-radius:13px;padding:16px}.stat span{display:block;color:var(--muted);font-size:12px;text-transform:uppercase;letter-spacing:.08em}.stat strong{font-size:26px;color:var(--gold)}.tools{display:grid;grid-template-columns:minmax(220px,1fr) 180px 180px auto;gap:10px;margin:16px 0}.layout{display:grid;grid-template-columns:minmax(0,1.1fr) minmax(330px,.9fr);gap:16px;align-items:start}.order-list{display:grid;gap:10px}.order-card{cursor:pointer}.order-card.selected{border-color:var(--gold);box-shadow:0 0 0 1px var(--gold)}.order-head{display:flex;justify-content:space-between;gap:10px}.pill{display:inline-block;padding:4px 9px;border-radius:99px;background:#382619;color:var(--gold);font-size:12px;text-transform:uppercase}.pill.paid{background:#173526;color:var(--green)}.pill.unpaid{background:#40251a;color:#ffc38e}.pill.cancelled{background:#421d26;color:#ff9ca8}.order-card h3{margin:4px 0 7px}.row{display:flex;justify-content:space-between;gap:10px;margin:6px 0}.money{font-weight:800;color:var(--gold)}.panel h2{margin:0 0 12px}.detail-empty{padding:35px 15px;text-align:center;color:var(--muted)}.items{width:100%;border-collapse:collapse;margin:12px 0}.items th,.items td{text-align:left;border-bottom:1px solid var(--line);padding:9px 5px;vertical-align:top}.items th:last-child,.items td:last-child{text-align:right}.items td:nth-child(2),.items th:nth-child(2){text-align:center}.total-line{display:flex;justify-content:space-between;padding:5px 0}.grand{border-top:1px solid var(--line);margin-top:7px;padding-top:12px;font-size:20px;font-weight:850}.actions{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-top:14px}.actions .wide{grid-column:1/-1}.notice{padding:10px 12px;border-radius:8px;margin:10px 0;background:#1a1115;color:var(--muted)}.notice.error{color:#ff9696;border:1px solid #65303b}.notice.good{color:var(--green);border:1px solid #28573e}.login{max-width:420px;margin:7vh auto}.login label{display:block;margin:12px 0 5px}.login button{width:100%;margin-top:14px}.small{font-size:12px}.nowrap{white-space:nowrap}#receipt{display:none}.editor{border:1px solid var(--line);border-radius:12px;padding:12px;margin-top:12px;background:#190b11}.editor-row{display:grid;grid-template-columns:minmax(0,1fr) auto auto auto;gap:8px;align-items:center;padding:10px 0;border-bottom:1px solid var(--line)}.editor-row:last-child{border-bottom:0}.qty{min-width:28px;text-align:center;font-weight:800}.mini{padding:7px 11px;min-width:38px;font-weight:800}.danger{color:#ff9ca8;border-color:#65303b}.editor select{width:100%;margin:8px 0}.editor-total{display:flex;justify-content:space-between;font-weight:850;font-size:18px;margin:12px 0}.editor-buttons{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px}.editor-buttons .wide{grid-column:1/-1}.hint{font-size:12px;color:var(--muted);margin:6px 0}
+@media(max-width:900px){.layout{grid-template-columns:1fr}.tools{grid-template-columns:1fr 1fr}.stats{grid-template-columns:repeat(2,1fr)}header{position:static}.wrap{padding:13px}.panel{min-width:0}}@media(max-width:520px){.tools{grid-template-columns:1fr}.actions{grid-template-columns:1fr}.actions .wide{grid-column:auto}.stats{gap:8px}.stat{padding:12px}.stat strong{font-size:22px}}
+@media print{body{background:white!important;color:#111!important;font:12px Arial,sans-serif}header,.wrap,#loginPanel,#mainPanel,.no-print{display:none!important}#receipt{display:block!important;max-width:76mm;margin:0 auto;color:#111!important}#receipt h1,#receipt h2{text-align:center;margin:4px 0}#receipt p{margin:3px 0}#receipt table{width:100%;border-collapse:collapse;margin:10px 0}#receipt th,#receipt td{padding:4px 1px;border-bottom:1px dashed #aaa;text-align:left}#receipt th:last-child,#receipt td:last-child{text-align:right}#receipt .r{text-align:right}#receipt .center{text-align:center}#receipt .total{border-top:1px dashed #333;padding-top:7px;font-weight:bold}}
+</style></head>
+<body>
+<header><div class="brand">MUGHAL E RAJ <small>BILLING & CASH DESK</small></div><div><span id="staffLabel" class="muted"></span> <button id="refreshBtn" class="hidden">Refresh orders</button> <button id="logoutBtn" class="hidden">Sign out</button></div></header>
+<section id="loginPanel" class="login panel"><h1>Billing sign in</h1><p class="muted">Sign in with your Supabase staff account.</p><form id="loginForm"><label for="email">Email address</label><input id="email" type="email" autocomplete="username" required><label for="password">Password</label><input id="password" type="password" autocomplete="current-password" required><button class="primary" type="submit">Sign in</button><div id="loginError" class="notice error hidden"></div></form></section>
+<main id="mainPanel" class="wrap hidden"><div id="notice" class="notice" role="status">Loading orders…</div><div class="stats"><div class="stat"><span>Orders today</span><strong id="countToday">0</strong></div><div class="stat"><span>Paid today</span><strong id="countPaid">₹0</strong></div><div class="stat"><span>Orders this month</span><strong id="countMonth">0</strong></div><div class="stat"><span>Paid this month</span><strong id="paidMonth">₹0</strong></div><div class="stat"><span>Unpaid orders</span><strong id="countUnpaid">0</strong></div><div class="stat"><span>Orders to prepare</span><strong id="countActive">0</strong></div></div>
+<div class="tools"><input id="search" placeholder="Search order ID, customer, mobile, table…" aria-label="Search orders"><select id="payFilter"><option value="all">All payments</option><option value="unpaid">Unpaid only</option><option value="paid">Paid only</option><option value="refunded">Refunded</option></select><select id="statusFilter"><option value="all">All order statuses</option><option value="pending">Pending</option><option value="accepted">Accepted</option><option value="preparing">Preparing</option><option value="ready">Ready</option><option value="completed">Completed</option><option value="cancelled">Cancelled</option></select><button id="todayBtn">Today</button></div>
+<div class="layout"><section><h2>Orders</h2><div id="orderList" class="order-list"></div></section><aside class="panel"><div id="detailEmpty" class="detail-empty"><h2>Select an order</h2><p>Choose an order from the list to view customer details, itemized bill, payment and printing options.</p></div><div id="detail" class="hidden"></div></aside></div></main>
+<section id="receipt"></section>
+<script>
+(function(){
+const SUPABASE_URL="https://YOUR_SUPABASE_PROJECT_REF.supabase.co";
+const SUPABASE_KEY="YOUR_SUPABASE_PUBLISHABLE_KEY";
+const RESTAURANT_ID="YOUR_RESTAURANT_UUID";
+const db=window.supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
+const $=id=>document.getElementById(id);let orders=[],selectedId=null,staff=null,refreshTimer=null,todayOnly=false;
+const BILL_STATUS_KEY='mer_billing_last_status_v1', BILL_PRINTED_KEY='mer_billing_printed_v1';
+const readStore=(key,fallback)=>{try{return JSON.parse(localStorage.getItem(key)||'')}catch(e){return fallback}};
+let lastStatuses=readStore(BILL_STATUS_KEY,{}),printedOrders=new Set(readStore(BILL_PRINTED_KEY,[]));
+let statusBaselineReady=Object.keys(lastStatuses).length>0,printInProgress=false;
+function savePrintState(){try{localStorage.setItem(BILL_STATUS_KEY,JSON.stringify(lastStatuses));localStorage.setItem(BILL_PRINTED_KEY,JSON.stringify([...printedOrders].slice(-500)))}catch(e){}}
+function detectAcceptedOrders(nextOrders){if(!statusBaselineReady){nextOrders.forEach(o=>lastStatuses[o.id]=o.status);statusBaselineReady=true;savePrintState();return;}nextOrders.forEach(o=>{lastStatuses[o.id]=o.status;});savePrintState();}
+
+const money=p=>new Intl.NumberFormat('en-IN',{style:'currency',currency:'INR',maximumFractionDigits:2}).format((Number(p)||0)/100);
+const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const pretty=s=>String(s||'').replaceAll('_',' ').replace(/\b\w/g,c=>c.toUpperCase());
+function notice(msg,type=''){ $('notice').textContent=msg;$('notice').className='notice'+(type?' '+type:''); }
+function showLogin(){ $('loginPanel').classList.remove('hidden');$('mainPanel').classList.add('hidden');$('logoutBtn').classList.add('hidden');$('refreshBtn').classList.add('hidden');$('staffLabel').textContent=''; }
+async function checkStaff(user){const {data,error}=await db.from('staff_members').select('role,is_active,restaurant_id').eq('user_id',user.id).maybeSingle();if(error)throw error;if(!data||!data.is_active||data.restaurant_id!==RESTAURANT_ID)throw new Error('This account is not active staff for Mughal E Raj.');if(data.role!=='billing')throw new Error('Access denied: only an active Billing account may use the Billing dashboard.');staff=data;}
+function showDashboard(user){$('loginPanel').classList.add('hidden');$('mainPanel').classList.remove('hidden');$('logoutBtn').classList.remove('hidden');$('refreshBtn').classList.remove('hidden');$('staffLabel').textContent=(user.email||'Staff')+' · '+pretty(staff.role);}
+async function loadOrders(){notice('Refreshing orders…');const {data,error}=await db.from('orders').select('id,order_number,customer_name,customer_phone,order_type,table_number,delivery_address,notes,status,payment_status,payment_method,paid_at,paid_by,subtotal_paise,tax_paise,discount_paise,total_paise,created_at,updated_at,order_items(id,item_name,quantity,unit_price_paise,line_total_paise,special_instructions)').eq('restaurant_id',RESTAURANT_ID).order('created_at',{ascending:false}).limit(250);if(error){notice('Could not load orders: '+error.message,'error');return;}orders=data||[];detectAcceptedOrders(orders);if(selectedId&&!orders.some(o=>o.id===selectedId))selectedId=null;updateStats();renderList();if(selectedId)renderDetail(orders.find(o=>o.id===selectedId));notice('Orders updated · '+new Date().toLocaleTimeString(),'good');}
+function updateStats(){const now=new Date();const dayStart=new Date(now.getFullYear(),now.getMonth(),now.getDate());const monthStart=new Date(now.getFullYear(),now.getMonth(),1);const todays=orders.filter(o=>new Date(o.created_at)>=dayStart);const monthly=orders.filter(o=>new Date(o.created_at)>=monthStart);$('countToday').textContent=todays.length;$('countMonth').textContent=monthly.length;$('countUnpaid').textContent=orders.filter(o=>o.payment_status==='unpaid'&&o.status!=='cancelled').length;$('countPaid').textContent=money(todays.filter(o=>o.payment_status==='paid').reduce((s,o)=>s+(Number(o.total_paise)||0),0));$('paidMonth').textContent=money(monthly.filter(o=>o.payment_status==='paid').reduce((s,o)=>s+(Number(o.total_paise)||0),0));$('countActive').textContent=orders.filter(o=>['pending','accepted','preparing','ready'].includes(o.status)).length;}
+function renderList(){const q=$('search').value.trim().toLowerCase(),pf=$('payFilter').value,sf=$('statusFilter').value;let list=orders.filter(o=>{if(todayOnly&&new Date(o.created_at)<new Date(new Date().setHours(0,0,0,0)))return false;if(pf!=='all'&&o.payment_status!==pf)return false;if(sf!=='all'&&o.status!==sf)return false;const hay=[o.order_number,o.customer_name,o.customer_phone,o.table_number,o.id,o.order_type].join(' ').toLowerCase();return !q||hay.includes(q)});$('orderList').innerHTML=list.length?list.map(o=>`<article class="order-card ${o.id===selectedId?'selected':''}" data-id="${o.id}"><div class="order-head"><strong>Order #${esc(o.order_number)}</strong><span class="pill ${o.payment_status==='paid'?'paid':'unpaid'}">${esc(o.payment_status)}</span></div><h3>${esc(o.customer_name||'Walk-in customer')}</h3><div class="muted">${esc(pretty(o.order_type))}${o.table_number?' · Table '+esc(o.table_number):''} · ${esc(new Date(o.created_at).toLocaleString())}</div><div class="row"><span>${(o.order_items||[]).reduce((n,i)=>n+Number(i.quantity||0),0)} item(s) · ${esc(pretty(o.status))}</span><strong class="money">${money(o.total_paise)}</strong></div></article>`).join(''):'<div class="order-card">No orders match these filters.</div>';}
+let paymentMethodChoice = {};
+let editingOrderId = null;
+let editDraft = [];
+let menuCache = null;
+
+async function getMenuItems(){
+  if(menuCache) return menuCache;
+  const {data,error} = await db.from('menu_items')
+    .select('id,name,category,price_paise,is_available')
+    .eq('restaurant_id',RESTAURANT_ID).eq('is_available',true)
+    .order('category').order('name').limit(500);
+  if(error) throw error;
+  menuCache = data || [];
+  return menuCache;
+}
+function calculateDraftTotal(){
+  return editDraft.reduce((sum,item)=>sum + Number(item.unit_price_paise||0)*Number(item.quantity||0),0);
+}
+function renderEditor(){
+  const host = $('orderEditor');
+  if(!host) return;
+  const rows = editDraft.map((it,index)=>`<div class="editor-row">
+    <div><strong>${esc(it.item_name)}</strong><div class="muted small">${money(it.unit_price_paise)} each</div></div>
+    <button type="button" class="mini" data-edit="minus" data-index="${index}" aria-label="Decrease quantity">−</button>
+    <span class="qty">${Number(it.quantity)||0}</span>
+    <div style="display:flex;gap:5px"><button type="button" class="mini" data-edit="plus" data-index="${index}" aria-label="Increase quantity">+</button><button type="button" class="mini danger" data-edit="remove" data-index="${index}" aria-label="Remove item">×</button></div>
+  </div>`).join('');
+  const currentOrder = orders.find(x=>x.id===editingOrderId);
+  host.innerHTML = `<div class="editor">
+    <h3 style="margin:0 0 8px">Edit order</h3>
+    <label for="editTableNumber" class="small">Table number</label>
+    <input id="editTableNumber" type="text" inputmode="numeric" placeholder="Enter table number" value="${esc(currentOrder?.table_number||'')}" style="margin:6px 0 12px">
+    <p class="hint">Change the table number and/or food items, then save once.</p>
+    <p class="hint">Tap + or − to change quantities. Remove an item with ×.</p>
+    ${rows || '<p class="muted">No items in this order yet.</p>'}
+    <label for="addMenuItem" class="small">Add another item</label>
+    <select id="addMenuItem"><option value="">Choose a menu item…</option></select>
+    <button type="button" id="addMenuBtn">+ Add item</button>
+    <div class="editor-total"><span>New total</span><span>${money(calculateDraftTotal())}</span></div>
+    <div class="editor-buttons"><button type="button" id="cancelEditBtn">Cancel</button><button type="button" class="primary" id="saveEditBtn">Save changes</button></div>
+    <p class="hint">The saved bill total will be recalculated from menu prices.</p>
+  </div>`;
+  const select = $('addMenuItem');
+  getMenuItems().then(items=>{
+    if(!select.isConnected) return;
+    select.innerHTML = '<option value="">Choose a menu item…</option>' + items.map(i=>`<option value="${esc(i.id)}">${esc(i.name)} — ${money(i.price_paise)}</option>`).join('');
+  }).catch(err=>notice('Could not load menu items: '+err.message,'error'));
+  host.querySelectorAll('[data-edit]').forEach(btn=>btn.addEventListener('click',()=>{
+    const idx=Number(btn.dataset.index), action=btn.dataset.edit;
+    if(action==='plus') editDraft[idx].quantity++;
+    if(action==='minus') editDraft[idx].quantity=Math.max(0,editDraft[idx].quantity-1);
+    if(action==='remove'||editDraft[idx].quantity===0) editDraft.splice(idx,1);
+    renderEditor();
+  }));
+  $('addMenuBtn').onclick=async()=>{
+    const id=$('addMenuItem').value;
+    if(!id){notice('Choose a menu item first.','error');return;}
+    try{
+      const items=await getMenuItems(), picked=items.find(x=>x.id===id);
+      if(!picked)return;
+      const existing=editDraft.find(x=>x.menu_item_id===picked.id);
+      if(existing) existing.quantity++;
+      else editDraft.push({menu_item_id:picked.id,item_name:picked.name,unit_price_paise:Number(picked.price_paise),quantity:1,special_instructions:null});
+      renderEditor();
+    }catch(err){notice('Could not add item: '+err.message,'error');}
+  };
+  $('cancelEditBtn').onclick=()=>{editingOrderId=null;renderDetail(orders.find(x=>x.id===selectedId));};
+  $('saveEditBtn').onclick=()=>saveOrderEdits();
+}
+async function startOrderEdit(o){
+  if(o.payment_status==='paid'){notice('This order is already paid. Please correct paid bills through a manager.', 'error');return;}
+  if(['completed','cancelled'].includes(o.status)){notice('Completed or cancelled orders cannot be edited.', 'error');return;}
+  editingOrderId=o.id;
+  editDraft=(o.order_items||[]).map(i=>({id:i.id,menu_item_id:i.menu_item_id||null,item_name:i.item_name,unit_price_paise:Number(i.unit_price_paise),quantity:Number(i.quantity),special_instructions:i.special_instructions||null}));
+  // Backfill menu item IDs by matching exact names if the original order row lacks the ID.
+  try{
+    const menu=await getMenuItems();
+    editDraft.forEach(i=>{if(!i.menu_item_id){const match=menu.find(m=>m.name===i.item_name);if(match)i.menu_item_id=match.id;}});
+  }catch(e){}
+  renderEditor();
+  $('orderEditor').scrollIntoView({behavior:'smooth',block:'nearest'});
+}
+async function saveOrderEdits(){
+  const o=orders.find(x=>x.id===editingOrderId);
+  if(!o)return;
+  if(o.payment_status==='paid'){notice('Paid orders cannot be edited.', 'error');return;}
+  if(editDraft.length===0&&!confirm('This will remove every item and make the total ₹0. Continue?'))return;
+  if(editDraft.some(i=>!i.menu_item_id)){notice('One or more existing items could not be matched to the menu. Do not save; ask the administrator to check those menu items.', 'error');return;}
+  const saveBtn=$('saveEditBtn');if(saveBtn){saveBtn.disabled=true;saveBtn.textContent='Saving…';}
+  try{
+    // Update existing item quantities where possible; delete removed rows; insert newly added rows.
+    const wantedIds=editDraft.filter(i=>i.id).map(i=>i.id);
+    const removed=(o.order_items||[]).filter(i=>!wantedIds.includes(i.id));
+    if(removed.length){
+      const {error}=await db.from('order_items').delete().in('id',removed.map(i=>i.id)).eq('order_id',o.id);
+      if(error)throw error;
+    }
+    for(const item of editDraft){
+      const qty=Number(item.quantity);
+      if(!Number.isInteger(qty)||qty<1||qty>99)throw new Error('Each quantity must be between 1 and 99.');
+      const line_total_paise=Number(item.unit_price_paise)*qty;
+      if(item.id){
+        const {error}=await db.from('order_items').update({quantity:qty,line_total_paise}).eq('id',item.id).eq('order_id',o.id);
+        if(error)throw error;
+      }else{
+        const {error}=await db.from('order_items').insert({order_id:o.id,menu_item_id:item.menu_item_id,item_name:item.item_name,unit_price_paise:item.unit_price_paise,quantity:qty,line_total_paise,special_instructions:item.special_instructions});
+        if(error)throw error;
+      }
+    }
+    const subtotal=calculateDraftTotal();
+    const newTableNumber=($('editTableNumber')?.value||'').trim();
+    const {error:orderError}=await db.from('orders').update({subtotal_paise:subtotal,total_paise:subtotal,table_number:newTableNumber||null}).eq('id',o.id).eq('restaurant_id',RESTAURANT_ID).eq('payment_status','unpaid');
+    if(orderError)throw orderError;
+    notice('Order items and bill total saved. Refreshing…','good');
+    editingOrderId=null;await loadOrders();
+  }catch(err){
+    notice('Could not save order edits: '+err.message+'. Database permissions may need to be enabled for billing staff.', 'error');
+    if(saveBtn){saveBtn.disabled=false;saveBtn.textContent='Save changes';}
+  }
+}
+function renderDetail(o){
+  if(!o){$('detail').classList.add('hidden');$('detailEmpty').classList.remove('hidden');return;}
+  $('detailEmpty').classList.add('hidden');$('detail').classList.remove('hidden');
+  const items=o.order_items||[];
+  const itemRows=items.map(i=>`<tr><td><strong>${esc(i.item_name)}</strong>${i.special_instructions?`<div class="muted small">Note: ${esc(i.special_instructions)}</div>`:''}<div class="muted small">${money(i.unit_price_paise)} each</div></td><td>${esc(i.quantity)}</td><td>${money(i.line_total_paise)}</td></tr>`).join('');
+  const type=pretty(o.order_type);
+  const chosenMethod=paymentMethodChoice[o.id]||o.payment_method||'cash';
+  $('detail').innerHTML=`<div class="order-head"><div><div class="muted small">ORDER NUMBER</div><h2>#${esc(o.order_number)}</h2></div><span class="pill ${o.payment_status==='paid'?'paid':'unpaid'}">${esc(pretty(o.payment_status))}</span></div>
+  <div class="row"><span class="muted">Placed</span><strong>${esc(new Date(o.created_at).toLocaleString())}</strong></div><div class="row"><span class="muted">Order status</span><strong>${esc(pretty(o.status))}</strong></div>
+  <hr style="border:0;border-top:1px solid var(--line);margin:14px 0"><h3>Customer details</h3>
+  <div class="row"><span class="muted">Name</span><strong>${esc(o.customer_name||'—')}</strong></div><div class="row"><span class="muted">Mobile</span><strong>${esc(o.customer_phone||'Not provided')}</strong></div><div class="row"><span class="muted">Type</span><strong>${esc(type)}</strong></div>
+  ${o.table_number?`<div class="row"><span class="muted">Table number</span><strong>${esc(o.table_number)}</strong></div>`:''}${o.delivery_address?`<div><div class="muted">Delivery address</div><div>${esc(o.delivery_address)}</div></div>`:''}${o.notes?`<div class="notice"><strong>Customer note</strong><br>${esc(o.notes)}</div>`:''}
+  <h3 style="margin-top:18px">Itemized bill</h3><table class="items"><thead><tr><th>Item</th><th>Qty</th><th>Total</th></tr></thead><tbody>${itemRows}</tbody></table>
+  <div class="total-line"><span>Subtotal</span><span>${money(o.subtotal_paise)}</span></div><div class="total-line"><span>Tax</span><span>${money(o.tax_paise)}</span></div><div class="total-line"><span>Discount</span><span>−${money(o.discount_paise)}</span></div><div class="total-line grand"><span>Total</span><span>${money(o.total_paise)}</span></div>
+  <div class="notice">Payment method: <strong>${esc(o.payment_method?pretty(o.payment_method):'Not recorded in database')}</strong><br>Payment status: <strong>${esc(pretty(o.payment_status))}</strong>${o.paid_at?'<br>Paid at: '+esc(new Date(o.paid_at).toLocaleString()):''}</div>
+  <div class="actions no-print"><button id="printBtn" class="primary" ${o.payment_status!=='paid'?'disabled title="Mark the order paid before printing the final customer bill"':''}>Print final bill</button><button id="editOrderBtn" ${o.payment_status==='paid'||['completed','cancelled'].includes(o.status)?'disabled':''}>Edit order</button><button id="paidBtn" ${o.payment_status==='paid'||o.status==='cancelled'?'disabled':''}>Mark paid</button><select id="methodSelect" aria-label="Payment method" ${o.payment_status==='paid'?'disabled':''}><option value="cash" ${chosenMethod==='cash'?'selected':''}>Cash</option><option value="upi" ${chosenMethod==='upi'?'selected':''}>UPI</option></select><button id="refreshDetailBtn" class="wide">Refresh detail</button></div>
+  <div id="orderEditor"></div><p class="muted small no-print">Choose Cash or UPI, then mark the order paid only after receiving payment. Your selection will stay selected while the dashboard refreshes.</p>`;
+  $('methodSelect').addEventListener('change',e=>{paymentMethodChoice[o.id]=e.target.value;});
+  $('printBtn').onclick=()=>{if(o.payment_status!=='paid'){notice('The final customer bill can only be printed after payment is recorded.','error');return;}printReceipt(o);};
+  $('editOrderBtn').onclick=()=>startOrderEdit(o);
+  $('paidBtn').onclick=()=>markPaid(o,paymentMethodChoice[o.id]||$('methodSelect').value);
+  $('refreshDetailBtn').onclick=loadOrders;
+  if(editingOrderId===o.id)renderEditor();
+}
+async function markPaid(o,method){if(o.payment_status==='paid')return;if(!['cash','upi'].includes(method)){notice('Choose Cash or UPI first.','error');return;}if(!confirm(`Confirm that order #${o.order_number} was paid by ${method.toUpperCase()}? Only continue after you have received the payment.`))return;const {data:userResult,error:userError}=await db.auth.getUser();if(userError||!userResult?.user){notice('Your session expired. Please sign in again.','error');return;}const {data,error}=await db.from('orders').update({payment_status:'paid',payment_method:method,paid_at:new Date().toISOString(),paid_by:userResult.user.id}).eq('id',o.id).eq('restaurant_id',RESTAURANT_ID).eq('payment_status','unpaid').select('id').maybeSingle();if(error){notice('Payment update failed: '+error.message,'error');return;}if(!data){notice('Payment was not changed. Refresh the order and check whether it was already paid.','error');return;}notice(`Order #${o.order_number} recorded as PAID by ${method.toUpperCase()}.`,'good');await loadOrders();}
+function printReceipt(o,mode='bill'){if(mode==='bill'&&o.payment_status!=='paid'){notice('The final customer bill can only be printed after payment is recorded.','error');return;}if(printInProgress)return;printInProgress=true;const rows=(o.order_items||[]).map(i=>`<tr><td>${esc(i.item_name)}<br><small>${esc(i.quantity)} × ${money(i.unit_price_paise)}</small></td><td>${money(i.line_total_paise)}</td></tr>`).join('');$('receipt').innerHTML=`<h1>MUGHAL E RAJ</h1><h2>Royal Mughlai Dining</h2><p class="center"><b>${mode==='order-copy'?'ORDER COPY · BILLING DESK':'CUSTOMER BILL'}</b></p>${mode==='order-copy'?'<p class="center"><b>NOT A PAYMENT RECEIPT</b></p>':''}<hr><p><b>Order:</b> #${esc(o.order_number)}</p><p><b>Date:</b> ${esc(new Date(o.created_at).toLocaleString('en-IN'))}</p><p><b>Customer:</b> ${esc(o.customer_name||'Walk-in')}</p><p><b>Mobile:</b> ${esc(o.customer_phone||'—')}</p><p><b>Type:</b> ${esc(pretty(o.order_type))}${o.table_number?' · Table '+esc(o.table_number):''}</p><table><thead><tr><th>Item</th><th>Amount</th></tr></thead><tbody>${rows}</tbody></table><p class="r">Subtotal: ${money(o.subtotal_paise)}</p><p class="r">Tax: ${money(o.tax_paise)}</p><p class="r">Discount: −${money(o.discount_paise)}</p><p class="r total">TOTAL: ${money(o.total_paise)}</p><p><b>Payment:</b> ${esc(pretty(o.payment_status))}${o.payment_method?' · '+esc(pretty(o.payment_method)):''}${o.paid_at?' · '+esc(new Date(o.paid_at).toLocaleString('en-IN')):''}</p><hr>${mode==='order-copy'?'<p class="center">Accepted order · collect payment separately</p>':'<p class="center">Thank you for dining with us!</p><p class="center">Please visit again.</p>'}`;const originalTitle=document.title;const datePart=new Date(o.created_at).toLocaleDateString('en-CA');const orderPart=String(o.order_number).padStart(3,'0');document.title=`Mughal-E-Raj-${mode==='order-copy'?'Order-Copy':'Bill'}-${orderPart}-${datePart}`;const restoreTitle=()=>{document.title=originalTitle;printInProgress=false;window.removeEventListener('afterprint',restoreTitle);};window.addEventListener('afterprint',restoreTitle);window.print();setTimeout(restoreTitle,60000);}
+$('loginForm').addEventListener('submit',async e=>{e.preventDefault();$('loginError').classList.add('hidden');const {data,error}=await db.auth.signInWithPassword({email:$('email').value.trim(),password:$('password').value});if(error){$('loginError').textContent=error.message;$('loginError').classList.remove('hidden');return;}try{await checkStaff(data.user);showDashboard(data.user);await loadOrders();if(refreshTimer)clearInterval(refreshTimer);refreshTimer=setInterval(()=>{if(!document.hidden)loadOrders()},5000);}catch(err){await db.auth.signOut();$('loginError').textContent=err.message;$('loginError').classList.remove('hidden');}});
+$('orderList').addEventListener('click',e=>{const card=e.target.closest('[data-id]');if(!card)return;selectedId=card.dataset.id;renderList();renderDetail(orders.find(o=>o.id===selectedId));});$('search').addEventListener('input',renderList);$('payFilter').addEventListener('change',renderList);$('statusFilter').addEventListener('change',renderList);$('todayBtn').addEventListener('click',()=>{todayOnly=!todayOnly;$('todayBtn').textContent=todayOnly?'Show all dates':'Today';$('todayBtn').classList.toggle('primary',todayOnly);renderList();});$('refreshBtn').addEventListener('click',loadOrders);$('logoutBtn').addEventListener('click',async()=>{if(refreshTimer)clearInterval(refreshTimer);refreshTimer=null;await db.auth.signOut();orders=[];selectedId=null;showLogin();});
+(async()=>{const {data}=await db.auth.getSession();if(data.session){try{await checkStaff(data.session.user);showDashboard(data.session.user);await loadOrders();refreshTimer=setInterval(()=>{if(!document.hidden)loadOrders()},5000);}catch(e){await db.auth.signOut();showLogin();$('loginError').textContent=e.message;$('loginError').classList.remove('hidden');}}else showLogin();})();
+})();
+</script></body></html>
