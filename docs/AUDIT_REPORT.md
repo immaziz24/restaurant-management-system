@@ -25,3 +25,16 @@ Audit scope: selected source files available in the connected project workspace.
 ## Scope boundary
 
 The staged source files are selected candidates, not proof that every feature or dependency of the deployed production system has been captured. No production database, hosting configuration, or user records were modified during this audit.
+
+
+## Backend source recovery update (read-only inspection)
+
+The connected Supabase account contains an active project named `mughal-e-raj-orders`. Its live database currently exposes the restaurant-ordering schema. The project has 19 recorded migrations, including ordering schema, secure order RPC, order history, payment tracking, customer confirmation enforcement, table QR security, idempotency, rate limiting, stale pending-order handling, and optional GPS settings.
+
+Read-only metadata inspection confirmed RLS is enabled on the listed public tables. The visible policy inventory includes public read policies for active restaurants and available menu items, and staff-scoped read/update policies for orders, order items, status history, staff records, and owner business records. Three order triggers were visible: status-flow enforcement, pending dine-in order limits, and status-history logging.
+
+Three active deployed Edge Function source files have now been added under `supabase/functions/`: `create-order`, `create-order-secure`, and `start-table-session` (each retrieved at deployed version 6). The project also has test/validation functions; these are not included in the production function folder pending a separate classification and cleanup review.
+
+**Important boundary:** The Supabase project is the backend serving Mughal E Raj ordering and QR-menu flows (its Edge Function CORS allowlist includes Plateria domains). It should not be silently treated as a separate Plateria SaaS database or merged with another project without a deliberate architecture decision.
+
+The migration API returned migration names and versions, not the SQL bodies. Therefore the original migration SQL has not yet been recovered into this repository. A live schema inventory is not a substitute for the authoritative migration history.
