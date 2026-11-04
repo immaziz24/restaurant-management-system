@@ -52,3 +52,17 @@ These are preserved as drafts and must not be run against production simply beca
 ## Package manifest search
 
 A search of the connected project files and library did not locate an authoritative Electron `package.json` or lockfile. No manifest has been invented or committed. The app's actual Electron version, npm scripts, dependencies, and packaging configuration remain unverified.
+
+
+## Read-only live schema metadata snapshot (2026-11-04)
+
+A read-only catalog inspection has now recorded the live public schema in `supabase/snapshots/LIVE_SCHEMA_METADATA.md`. It observed 12 public tables, 9 public database functions, 3 order triggers, and the currently listed public RLS policies. This is descriptive metadata, not a complete SQL backup or restorable migration.
+
+Notable observations requiring a later security/release review:
+
+- The live `restaurants` table still has GPS coordinate/radius/configuration columns. `gps_verification_enabled` currently defaults to false. This audit did not change these settings or columns.
+- The live schema includes `owner_business_records`; the matching SQL found in the library is archived as a setup script, but its exact deployment history is not confirmed.
+- Three test/validation Edge Functions are still marked ACTIVE in Supabase, and their listed `verify_jwt` setting is false. Their source is archived separately under `supabase/functions-test-archive/`. This is a security-review item; no live function settings were changed.
+- The public policy catalog shows staff-scoped policies for orders, order items, order history and staff records; owner-scoped policies for owner business records; and public read policies for active restaurants and available menu items. This metadata inspection does not establish that the overall system has passed security testing.
+
+The original migration SQL bodies and authoritative Electron package manifest remain unavailable. The repository must not yet be described as a reproducible or production-ready release.
