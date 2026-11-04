@@ -31,3 +31,14 @@ The active Supabase project is `mughal-e-raj-orders`. Its schema/migration inven
 - `supabase/drafts/table-qr-security.draft.sql` — QR-token and table-session schema draft; source explicitly says it has not been applied.
 
 No authoritative `package.json` or lockfile was found in the connected project library, so none has been fabricated.
+
+
+## Remaining deployed test/validation Edge Functions
+
+The connected Supabase project also has three ACTIVE functions whose names identify them as test/validation utilities. Their source has been archived separately; they are not mixed into the production function folder and have not been deployed or changed:
+
+- `supabase/functions-test-archive/verify-gps-test/index.ts` — version 2
+- `supabase/functions-test-archive/validate-shared-qr-order-test/index.ts` — version 1
+- `supabase/functions-test-archive/create-shared-qr-order-test/index.ts` — version 1
+
+These are source archives only. Their continued ACTIVE status in Supabase should be reviewed before a production security sign-off. No Edge Function deployment, deletion, or configuration change was performed.
